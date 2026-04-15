@@ -1,0 +1,78 @@
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP DATABASE IF EXISTS team12_projectdb CASCADE;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE DATABASE team12_projectdb LOCATION "project/hive/warehouse";
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> USE team12_projectdb;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE staging_flights (
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     id_basica STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_empresa_icao STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     dt_partida_real STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_di STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     ds_grupo_di STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_tipo_linha STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_origem STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_municipio_origem STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_uf_origem STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_pais_origem STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_continente_origem STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_destino STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_municipio_destino STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_uf_destino STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_pais_destino STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_continente_destino STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     km_distancia STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_pagos STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_gratis STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_rpk STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_ask STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_paga_km STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_gratis_km STRING
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/staging_flights';
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE dim_airport (
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_municipio STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_uf STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_pais STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_continente STRING
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/dim_airport';
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE dim_date (
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     dt DATE,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_ano SMALLINT,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_mes SMALLINT,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_trimestre SMALLINT,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_dia_semana SMALLINT
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/dim_date';
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE fact_flights (
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     id_basica BIGINT,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_empresa_icao STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     dt_partida_real DATE,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_origem STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_destino STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     route_id STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_di STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     ds_grupo_di STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_tipo_linha STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     km_distancia DOUBLE,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_ask DOUBLE,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_pagos INT,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_gratis INT,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_rpk DOUBLE,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_paga_kg DOUBLE,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_gratis DOUBLE
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/fact_flights';0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

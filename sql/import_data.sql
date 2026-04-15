@@ -1,0 +1,3 @@
+COPY staging_flights
+FROM STDIN
+WITH CSV HEADER DELIMITER ',' NULL AS 'null';

@@ -1,3 +1,56 @@
+secrets/
+
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+*.java
+venv
+*.csv
+*.tsv
+*.json
+*.xml
+
+# Columnar / big data formats
+*.parquet
+*.avro
+*.orc
+
+# Compressed data
+*.gz
+*.zip
+*.tar
+*.tar.gz
+*.bz2
+*.7z
+
+# =========================
+# Hadoop / Spark / Hive artifacts
+# =========================
+*_SUCCESS
+*.crc
+*.snappy
+*.lz4
+
+# Spark
+.sparkStaging/
+.metastore_db/
+derby.log
+
+# Hive
+hive.log
+hive.exec.scratchdir/
+hive.exec.local.scratchdir/
+
+# =========================
+# HDFS / local exports
+# =========================
+project/warehouse/
+project/hive/warehouse/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

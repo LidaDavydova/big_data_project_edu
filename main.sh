@@ -21,7 +21,6 @@ bash scripts/stage4.sh
 echo "Running post-processing!"
 bash scripts/postprocess.sh
 
-
 # Check the quality of the codes
 echo "The quality of scripts in 'scripts/' folder\n"
 echo "::============================================::"

@@ -5,8 +5,11 @@ Creates schema, imports data, populates tables, and runs validation queries.
 """
 import os
 from pprint import pprint
+import glob
 
 import psycopg2 as psql
+
+csv_parts = sorted(glob.glob("data/anac_brazil_sample.csv/part-*"))
 
 # Read password from secrets file
 file = os.path.join("secrets", ".psql.pass")
@@ -35,33 +38,13 @@ with psql.connect(conn_string) as conn:
     # Read the commands from the file and execute them.
     with open(os.path.join("sql", "import_data.sql"), 'r', encoding="utf-8") as f:
         copy_sql = f.read()
-
-    with open(os.path.join("data","anac_clean.csv"), 'r', encoding="utf-8") as data:
-        cur.copy_expert(copy_sql, data)
+    
+    for part_file in csv_parts:
+            with open(part_file, "r", encoding="utf-8") as data:
+                cur.copy_expert(copy_sql, data)
 
     # If the sql statements are CRUD then you need to commit the change
     conn.commit()
-
-    pprint(conn)
-
-    sql_file = os.path.join("sql", "populate2tables.sql")
-
-    with open(sql_file, 'r', encoding="utf-8") as f:
-        sql_script = f.read()
-
-    statements = [s.strip() for s in sql_script.split(";") if s.strip()]
-
-    for stmt in statements:
-        try:
-            cur.execute(stmt)
-        except Exception as e:
-            print("ERROR executing:")
-            print(stmt[:200])
-            raise e
-
-    conn.commit()
-
-    print("Population completed successfully.")
 
     pprint(conn)
     # Read the sql commands from the file

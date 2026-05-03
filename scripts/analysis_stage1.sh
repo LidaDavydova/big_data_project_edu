@@ -58,8 +58,8 @@ for test in "${tests[@]}"; do
     # 5. Measure Read Time using Spark (Full Scan of Fact Table)
     output=$(spark-submit \
     --master yarn \
-    --packages com.databricks:spark-avro_2.11:4.0.0 \
-    scripts/read_benchmark.py "$WAREHOUSE/fact_flights" "$fmt" 2>&1 | tee /dev/tty)
+    --packages org.apache.spark:spark-avro_2.12:3.5.1 \
+    scripts/read_benchmark.py "$WAREHOUSE/fact_flight" "$fmt" 2>&1 | tee /dev/tty)
     
     # Now extract the result from the captured output
     read_time=$(echo "$output" | grep "BENCHMARK_RESULT:" | cut -d':' -f2)

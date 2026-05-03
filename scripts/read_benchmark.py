@@ -15,7 +15,8 @@ start = time.time()
 if fmt == "text":
     df = spark.read.csv(path)
 elif fmt == "avro":
-    df = spark.read.format("com.databricks.spark.avro").load(path)
+    # df = spark.read.format("com.databricks.spark.avro").load(path)
+    df = spark.read.format("avro").load(path)
 elif fmt == "parquet":
     df = spark.read.parquet(path)
 

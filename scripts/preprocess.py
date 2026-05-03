@@ -1,69 +1,40 @@
-import pandas as pd
-import numpy as np
-import os
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
 
-INPUT_FILE = os.path.join("data", "anac_brazil.csv")
-OUTPUT_FILE = os.path.join("data", "anac_sample.csv")
+spark = SparkSession.builder \
+    .appName("ANAC Sampling") \
+    .master("local[*]") \
+    .getOrCreate()
 
-# Define required columns only
+INPUT_FILE = "data/anac_brazil.csv"
+OUTPUT_FILE = "data/anac_brazil_sample.csv"
+
+df = spark.read.csv(INPUT_FILE, header=True, inferSchema=True)
+
+
+df = df.withColumn("nr_passag_pagos", col("nr_passag_pagos").cast("int")) \
+       .withColumn("nr_passag_gratis", col("nr_passag_gratis").cast("int")) \
+       .withColumn("nr_ano_partida_real", col("nr_ano_partida_real").cast("int")) \
+       .withColumn("nr_mes_partida_real", col("nr_mes_partida_real").cast("int"))
+
 COLUMNS = [
-    "id_basica",
-    "sg_empresa_icao",
-    "dt_partida_real",
-    "cd_di",
-    "ds_grupo_di",
-    "cd_tipo_linha",
-
-    "sg_icao_origem",
-    "nm_municipio_origem",
-    "sg_uf_origem",
-    "nm_pais_origem",
-    "nm_continente_origem",
-
-    "sg_icao_destino",
-    "nm_municipio_destino",
-    "sg_uf_destino",
-    "nm_pais_destino",
-    "nm_continente_destino",
-
-    "km_distancia",
     "nr_passag_pagos",
     "nr_passag_gratis",
-    "nr_rpk",
-    "nr_ask",
-    "nr_carga_paga_km",
-    "nr_carga_gratis_km"
+    "ds_servico_tipo_linha",
+    "kg_carga_paga",
+    "id_aerodromo_origem",
+    "nm_pais_origem",
+    'id_aerodromo_destino', 
+    'nm_pais_destino',
+    'ds_grupo_di', 
+    'ds_natureza_tipo_linha', 
+    'ds_tipo_empresa',
+    "nr_ano_partida_real",
+    "nr_mes_partida_real"
 ]
 
-TARGET_SAMPLE_SIZE = 5_000_000
-CHUNK_SIZE = 1_000_000
-
-buffer = []  # temporary sampled rows
-
-rng = np.random.default_rng(42)
-
-print("Starting chunked sampling")
-
-for chunk in pd.read_csv(INPUT_FILE, chunksize=CHUNK_SIZE, low_memory=False):
-    # keep only needed columns (ignore missing safely)
-    chunk = chunk[[c for c in COLUMNS if c in chunk.columns]]
-
-    # random subset from chunk (proportional sampling)
-    sample_fraction = TARGET_SAMPLE_SIZE / 20_000_000 
-
-    sample_size = max(1, int(len(chunk) * sample_fraction))
-
-    sampled_chunk = chunk.sample(n=min(sample_size, len(chunk)), random_state=42)
-
-    buffer.append(sampled_chunk)
-    
-print("Creating buffer df_samle")7
-
-df_sample = pd.concat(buffer, ignore_index=True)
-
-if len(df_sample) > TARGET_SAMPLE_SIZE:
-    df_sample = df_sample.sample(n=TARGET_SAMPLE_SIZE, random_state=42)
-
-df_sample.to_csv(OUTPUT_FILE, index=False)
-
-print(f"Saved {len(df_sample)} rows to {OUTPUT_FILE}")
+df.select(*COLUMNS) \
+  .write \
+  .option("header", True) \
+  .mode("overwrite") \
+  .csv(OUTPUT_FILE)

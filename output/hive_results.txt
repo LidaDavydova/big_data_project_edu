@@ -1,78 +1,168 @@
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP DATABASE IF EXISTS team12_projectdb CASCADE;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE DATABASE team12_projectdb LOCATION "project/hive/warehouse";
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE DATABASE team12_projectdb
+. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/hive/warehouse';
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> USE team12_projectdb;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE staging_flights (
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     id_basica STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_empresa_icao STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     dt_partida_real STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_di STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     ds_grupo_di STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_tipo_linha STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SET hive.exec.dynamic.partition = true;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SET hive.exec.dynamic.partition.mode = nonstrict;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SET hive.enforce.bucketing = true;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_origem STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_municipio_origem STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_uf_origem STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_pais_origem STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_continente_origem STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- EXTERNAL TABLES 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_destino STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_municipio_destino STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_uf_destino STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_pais_destino STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_continente_destino STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS fact_flight;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE fact_flight (
+. . . . . . . . . . . . . . . . . . . . . . .>     flight_id BIGINT,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_passag_pagos INT,
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_passag_gratis INT,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_servico_tipo_linha STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     kg_carga_paga DOUBLE,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     id_aerodromo_origem STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     nm_pais_origem STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     id_aerodromo_destino STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     nm_pais_destino STRING,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_grupo_di STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_natureza_tipo_linha STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_tipo_empresa STRING,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_ano_partida_real INT,
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_mes_partida_real INT
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS PARQUET
+. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/warehouse/fact_flight';
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     km_distancia STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_pagos STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_gratis STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_rpk STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_ask STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_paga_km STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_gratis_km STRING
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/staging_flights';
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Partition + Bucketing
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE dim_airport (
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_municipio STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_uf STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_pais STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nm_continente STRING
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/dim_airport';
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS fact_flights_optimized;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE dim_date (
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     dt DATE,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_ano SMALLINT,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_mes SMALLINT,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_trimestre SMALLINT,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_dia_semana SMALLINT
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/dim_date';
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE fact_flights_optimized (
+. . . . . . . . . . . . . . . . . . . . . . .>     flight_id BIGINT,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_passag_pagos INT,
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_passag_gratis INT,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_servico_tipo_linha STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     kg_carga_paga DOUBLE,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     id_aerodromo_origem STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     nm_pais_origem STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     id_aerodromo_destino STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     nm_pais_destino STRING,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_grupo_di STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_natureza_tipo_linha STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_tipo_empresa STRING,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_mes_partida_real INT
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> PARTITIONED BY (nr_ano_partida_real INT)
+. . . . . . . . . . . . . . . . . . . . . . .> CLUSTERED BY (ds_natureza_tipo_linha) INTO 8 BUCKETS
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS PARQUET;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE fact_flights (
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     id_basica BIGINT,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_empresa_icao STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     dt_partida_real DATE,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_origem STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     sg_icao_destino STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     route_id STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- LOAD DATA INTO PARTITIONED TABLE
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_di STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     ds_grupo_di STRING,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     cd_tipo_linha STRING,
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> INSERT INTO TABLE fact_flights_optimized
+. . . . . . . . . . . . . . . . . . . . . . .> PARTITION (nr_ano_partida_real)
+. . . . . . . . . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .>     flight_id,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_passag_pagos,
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_passag_gratis,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_servico_tipo_linha,
+. . . . . . . . . . . . . . . . . . . . . . .>     kg_carga_paga,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     id_aerodromo_origem,
+. . . . . . . . . . . . . . . . . . . . . . .>     nm_pais_origem,
+. . . . . . . . . . . . . . . . . . . . . . .>     id_aerodromo_destino,
+. . . . . . . . . . . . . . . . . . . . . . .>     nm_pais_destino,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_grupo_di,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_natureza_tipo_linha,
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_tipo_empresa,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_mes_partida_real,
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_ano_partida_real
+. . . . . . . . . . . . . . . . . . . . . . .> FROM fact_flight;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     km_distancia DOUBLE,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_ask DOUBLE,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_pagos INT,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_passag_gratis INT,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_rpk DOUBLE,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_paga_kg DOUBLE,
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10>     nr_carga_gratis DOUBLE
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> )
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> STORED AS PARQUET
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> LOCATION 'project/warehouse/fact_flights';0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- VALIDATION
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SHOW PARTITIONS fact_flights_optimized;
++-------------------------------------------------+
+|                    partition                    |
++-------------------------------------------------+
+| nr_ano_partida_real=2000                        |
+| nr_ano_partida_real=2001                        |
+| nr_ano_partida_real=2002                        |
+| nr_ano_partida_real=2003                        |
+| nr_ano_partida_real=2004                        |
+| nr_ano_partida_real=2005                        |
+| nr_ano_partida_real=2006                        |
+| nr_ano_partida_real=2007                        |
+| nr_ano_partida_real=2008                        |
+| nr_ano_partida_real=2009                        |
+| nr_ano_partida_real=2010                        |
+| nr_ano_partida_real=2011                        |
+| nr_ano_partida_real=2012                        |
+| nr_ano_partida_real=2013                        |
+| nr_ano_partida_real=2014                        |
+| nr_ano_partida_real=2015                        |
+| nr_ano_partida_real=2016                        |
+| nr_ano_partida_real=2017                        |
+| nr_ano_partida_real=2018                        |
+| nr_ano_partida_real=2019                        |
+| nr_ano_partida_real=2020                        |
+| nr_ano_partida_real=2021                        |
+| nr_ano_partida_real=2022                        |
+| nr_ano_partida_real=2023                        |
+| nr_ano_partida_real=2024                        |
+| nr_ano_partida_real=2025                        |
+| nr_ano_partida_real=2026                        |
+| nr_ano_partida_real=__HIVE_DEFAULT_PARTITION__  |
++-------------------------------------------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_ano_partida_real, 
+. . . . . . . . . . . . . . . . . . . . . . .>     COUNT(*) AS total_flights
+. . . . . . . . . . . . . . . . . . . . . . .> FROM fact_flights_optimized
+. . . . . . . . . . . . . . . . . . . . . . .> GROUP BY nr_ano_partida_real
+. . . . . . . . . . . . . . . . . . . . . . .> ORDER BY nr_ano_partida_real;
++----------------------+----------------+
+| nr_ano_partida_real  | total_flights  |
++----------------------+----------------+
+| NULL                 | 21573          |
+| 2000                 | 783178         |
+| 2001                 | 820179         |
+| 2002                 | 744094         |
+| 2003                 | 620556         |
+| 2004                 | 612686         |
+| 2005                 | 652752         |
+| 2006                 | 681820         |
+| 2007                 | 743949         |
+| 2008                 | 765686         |
+| 2009                 | 838698         |
+| 2010                 | 969316         |
+| 2011                 | 1100432        |
+| 2012                 | 1141327        |
+| 2013                 | 1099584        |
+| 2014                 | 1098919        |
+| 2015                 | 999202         |
+| 2016                 | 889217         |
+| 2017                 | 947589         |
+| 2018                 | 887224         |
+| 2019                 | 956471         |
+| 2020                 | 447137         |
+| 2021                 | 605874         |
+| 2022                 | 841399         |
+| 2023                 | 929058         |
+| 2024                 | 945082         |
+| 2025                 | 977214         |
+| 2026                 | 25             |
++----------------------+----------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Drop unused table
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS fact_flight;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

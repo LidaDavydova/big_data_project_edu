@@ -1,78 +1,103 @@
 DROP DATABASE IF EXISTS team12_projectdb CASCADE;
 
-CREATE DATABASE team12_projectdb LOCATION "project/hive/warehouse";
+CREATE DATABASE team12_projectdb
+LOCATION 'project/hive/warehouse';
+
 USE team12_projectdb;
 
-CREATE EXTERNAL TABLE staging_flights (
-    id_basica STRING,
-    sg_empresa_icao STRING,
-    dt_partida_real STRING,
-    cd_di STRING,
-    ds_grupo_di STRING,
-    cd_tipo_linha STRING,
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+SET hive.enforce.bucketing = true;
 
-    sg_icao_origem STRING,
-    nm_municipio_origem STRING,
-    sg_uf_origem STRING,
-    nm_pais_origem STRING,
-    nm_continente_origem STRING,
+-- EXTERNAL TABLES 
 
-    sg_icao_destino STRING,
-    nm_municipio_destino STRING,
-    sg_uf_destino STRING,
-    nm_pais_destino STRING,
-    nm_continente_destino STRING,
+DROP TABLE IF EXISTS fact_flight;
+CREATE TABLE fact_flight (
+    flight_id BIGINT,
 
-    km_distancia STRING,
-    nr_passag_pagos STRING,
-    nr_passag_gratis STRING,
-    nr_rpk STRING,
-    nr_ask STRING,
-    nr_carga_paga_km STRING,
-    nr_carga_gratis_km STRING
-)
-STORED AS PARQUET
-LOCATION 'project/warehouse/staging_flights';
-
-CREATE EXTERNAL TABLE dim_airport (
-    sg_icao STRING,
-    nm_municipio STRING,
-    sg_uf STRING,
-    nm_pais STRING,
-    nm_continente STRING
-)
-STORED AS PARQUET
-LOCATION 'project/warehouse/dim_airport';
-
-CREATE EXTERNAL TABLE dim_date (
-    dt DATE,
-    nr_ano SMALLINT,
-    nr_mes SMALLINT,
-    nr_trimestre SMALLINT,
-    nr_dia_semana SMALLINT
-)
-STORED AS PARQUET
-LOCATION 'project/warehouse/dim_date';
-
-CREATE EXTERNAL TABLE fact_flights (
-    id_basica BIGINT,
-    sg_empresa_icao STRING,
-    dt_partida_real DATE,
-    sg_icao_origem STRING,
-    sg_icao_destino STRING,
-    route_id STRING,
-
-    cd_di STRING,
-    ds_grupo_di STRING,
-    cd_tipo_linha STRING,
-
-    km_distancia DOUBLE,
-    nr_ask DOUBLE,
     nr_passag_pagos INT,
     nr_passag_gratis INT,
-    nr_rpk DOUBLE,
-    nr_carga_paga_kg DOUBLE,
-    nr_carga_gratis DOUBLE
+    ds_servico_tipo_linha STRING,
+    kg_carga_paga DOUBLE,
+
+    id_aerodromo_origem STRING,
+    nm_pais_origem STRING,
+    id_aerodromo_destino STRING,
+    nm_pais_destino STRING,
+
+    ds_grupo_di STRING,
+    ds_natureza_tipo_linha STRING,
+    ds_tipo_empresa STRING,
+
+    nr_ano_partida_real INT,
+    nr_mes_partida_real INT
 )
 STORED AS PARQUET
-LOCATION 'project/warehouse/fact_flights';
+LOCATION 'project/warehouse/fact_flight';
+
+-- Partition + Bucketing
+
+DROP TABLE IF EXISTS fact_flights_optimized;
+
+CREATE TABLE fact_flights_optimized (
+    flight_id BIGINT,
+
+    nr_passag_pagos INT,
+    nr_passag_gratis INT,
+    ds_servico_tipo_linha STRING,
+    kg_carga_paga DOUBLE,
+
+    id_aerodromo_origem STRING,
+    nm_pais_origem STRING,
+    id_aerodromo_destino STRING,
+    nm_pais_destino STRING,
+
+    ds_grupo_di STRING,
+    ds_natureza_tipo_linha STRING,
+    ds_tipo_empresa STRING,
+
+    nr_mes_partida_real INT
+)
+PARTITIONED BY (nr_ano_partida_real INT)
+CLUSTERED BY (ds_natureza_tipo_linha) INTO 8 BUCKETS
+STORED AS PARQUET;
+
+-- LOAD DATA INTO PARTITIONED TABLE
+
+INSERT INTO TABLE fact_flights_optimized
+PARTITION (nr_ano_partida_real)
+SELECT
+    flight_id,
+
+    nr_passag_pagos,
+    nr_passag_gratis,
+    ds_servico_tipo_linha,
+    kg_carga_paga,
+
+    id_aerodromo_origem,
+    nm_pais_origem,
+    id_aerodromo_destino,
+    nm_pais_destino,
+
+    ds_grupo_di,
+    ds_natureza_tipo_linha,
+    ds_tipo_empresa,
+
+    nr_mes_partida_real,
+    nr_ano_partida_real
+FROM fact_flight;
+
+-- VALIDATION
+
+SHOW PARTITIONS fact_flights_optimized;
+
+SELECT
+    nr_ano_partida_real, 
+    COUNT(*) AS total_flights
+FROM fact_flights_optimized
+GROUP BY nr_ano_partida_real
+ORDER BY nr_ano_partida_real;
+
+-- Drop unused table
+
+DROP TABLE IF EXISTS fact_flight;

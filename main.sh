@@ -26,5 +26,4 @@ echo "The quality of scripts in 'scripts/' folder\n"
 echo "::============================================::"
 pylint scripts
 
-
 echo "Done testing the pipeline!"

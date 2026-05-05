@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+export HADOOP_CONF_DIR=/etc/hadoop/conf
+export YARN_CONF_DIR=/etc/hadoop/conf
+
 source ./venv/bin/activate
 
 spark-submit \

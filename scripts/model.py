@@ -7,16 +7,12 @@ from pyspark.ml.regression import RandomForestRegressor, GBTRegressor
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark.ml import Transformer
+from pyspark.ml.param.shared import HasInputCol, HasOutputCol
 
-class CyclicalMonthEncoder(Transformer):
-    """
-    encodes a month column (1-12) into two columns:
-    month_sin = sin(2 * pi * month / 12)
-    month_cos = cos(2 * pi * month / 12)
-    """
-    def __init__(self):
+class CyclicalMonthEncoder(Transformer, HasInputCol, HasOutputCol):
+    def __init__(self, inputCol=None, outputCol=None):
         super().__init__()
-        self._setDefault(inputCol="month", outputCol="month_encoded")
+        self._setDefault(inputCol="month", outputCol="month_enc")
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
 
@@ -27,12 +23,9 @@ class CyclicalMonthEncoder(Transformer):
         cos_col = base_col + "_cos"
 
         dataset = dataset.withColumn(
-            sin_col,
-            F.sin(2.0 * math.pi * F.col(input_col) / 12.0)
-        )
-        dataset = dataset.withColumn(
-            cos_col,
-            F.cos(2.0 * math.pi * F.col(input_col) / 12.0)
+            sin_col, F.sin(2.0 * math.pi * F.col(input_col) / 12.0)
+        ).withColumn(
+            cos_col, F.cos(2.0 * math.pi * F.col(input_col) / 12.0)
         )
         return dataset
 
@@ -69,8 +62,8 @@ flights = flights.filter(F.col("nr_ano_partida_real") <= 2025)
 # filter number of passengers to be adequate
 flights = flights.filter((F.col("nr_passag_pagos") > 0) & (F.col("nr_passag_pagos") <= 853))
 
-# create target column - total passangers
-flights = flights.withColumn("total_passangers", F.col("nr_passag_pagos") + F.col("nr_passag_gratis"))
+# create target column - total passengers
+flights = flights.withColumn("total_passengers", F.col("nr_passag_pagos") + F.col("nr_passag_gratis"))
 
 flights = flights.filter(F.col("total_passengers") <= 900)
 
@@ -99,7 +92,7 @@ monthly = monthly.withColumn("label", F.col("total_passengers"))
 # FEATURE ENGINEERING
 # ------------------
 
-month_encoder = CyclicalMonthEncoder()
+month_encoder = CyclicalMonthEncoder(inputCol="month", outputCol="month_enc")
 
 time_features = ["year", "time_index"]
 assembler = VectorAssembler(
@@ -109,15 +102,17 @@ assembler = VectorAssembler(
 
 scaler = StandardScaler(inputCol="features", outputCol="scaled_features", withStd=True, withMean=True)
 
-# pre-processing pipeline
-pipeline = Pipeline(stages=[month_encoder, assembler, scaler])
-preproc_model = pipeline.fit(monthly)
-data = preproc_model.transform(monthly)
-data = data.select("scaled_features", "label")
-
 # time-based train/test split
-train_data = data.filter(F.col("year") <= 2022)
-test_data = data.filter(F.col("year") >= 2023)
+train_monthly = monthly.filter(F.col("year") <= 2022)
+test_monthly = monthly.filter(F.col("year") >= 2023)
+
+# pre-processing pipeline (fit only on training data)
+pipeline = Pipeline(stages=[month_encoder, assembler, scaler])
+preproc_model = pipeline.fit(train_monthly)
+
+# transform train and test separately
+train_data = preproc_model.transform(train_monthly).select("scaled_features", "label")
+test_data = preproc_model.transform(test_monthly).select("scaled_features", "label")
 
 # save splits as json on hdfs
 train_data.coalesce(1).write.mode("overwrite").format("json").save("project/data/train")
@@ -134,17 +129,15 @@ rf = RandomForestRegressor(
     seed=42
 )
 
-# Hyperparameter grid (3 hyperparameters, 3 values each -> 27 combinations)
 param_grid_rf = (
     ParamGridBuilder()
-    .addGrid(rf.numTrees, [10, 20, 30])                   # model hyperparam
-    .addGrid(rf.maxDepth, [5, 10, 15])                    # model hyperparam
-    .addGrid(rf.minInstancesPerNode, [1, 2, 5])           # algorithm hyperparam
+    .addGrid(rf.numTrees, [10, 20, 30])
+    .addGrid(rf.maxDepth, [5, 10, 15])
+    .addGrid(rf.minInstancesPerNode, [1, 2, 5])
     .build()
 )
 
-evaluator_rf = RegressionEvaluator(labelCol="label", predictionCol="prediction",
-                                   metricName="rmse")
+evaluator_rf = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse")
 
 cv_rf = CrossValidator(
     estimator=rf,
@@ -155,34 +148,30 @@ cv_rf = CrossValidator(
     seed=42
 )
 
-print("=== Training RandomForestRegressor with cross-validation ===")
+# train
 cv_model_rf = cv_rf.fit(train_data)
-best_rf = cv_model_rf.bestModel
 
-# Save best model
+# select best model and save it
+best_rf = cv_model_rf.bestModel
 best_rf.write().overwrite().save("project/models/model1")
 
-# Predict on test data
+# predict
 pred_rf = best_rf.transform(test_data)
 
-# Evaluate
-rmse_rf = RegressionEvaluator(labelCol="label", predictionCol="prediction",
-                              metricName="rmse").evaluate(pred_rf)
-r2_rf = RegressionEvaluator(labelCol="label", predictionCol="prediction",
-                            metricName="r2").evaluate(pred_rf)
+# evaluate
+rmse_rf = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse").evaluate(pred_rf)
+r2_rf = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="r2").evaluate(pred_rf)
 
-print(f"RandomForestRegressor -> RMSE: {rmse_rf:.4f}, R²: {r2_rf:.4f}")
+print(f"RandomForestRegressor - RMSE: {rmse_rf:.4f}, R²: {r2_rf:.4f}")
 
-# Save predictions
+# save predictions
 pred_rf.select("label", "prediction") \
        .coalesce(1) \
        .write.mode("overwrite").format("csv") \
        .option("sep", ",").option("header", "true") \
        .save("project/output/model1_predictions.csv")
 
-# -----------------------------------------------------------------------
-# 9. Model 2 – GBTRegressor (Gradient-Boosted Trees)
-# -----------------------------------------------------------------------
+# model 2
 gbt = GBTRegressor(
     featuresCol="scaled_features",
     labelCol="label",
@@ -191,9 +180,9 @@ gbt = GBTRegressor(
 
 param_grid_gbt = (
     ParamGridBuilder()
-    .addGrid(gbt.maxDepth, [3, 5, 7])                     # model hyperparam
-    .addGrid(gbt.stepSize, [0.05, 0.1, 0.2])             # model hyperparam
-    .addGrid(gbt.subsamplingRate, [0.6, 0.8, 1.0])       # algorithm hyperparam
+    .addGrid(gbt.maxDepth, [3, 5, 7])
+    .addGrid(gbt.stepSize, [0.05, 0.1, 0.2])
+    .addGrid(gbt.subsamplingRate, [0.6, 0.8, 1.0])
     .build()
 )
 
@@ -209,34 +198,32 @@ cv_gbt = CrossValidator(
     seed=42
 )
 
-print("=== Training GBTRegressor with cross-validation ===")
+# train
 cv_model_gbt = cv_gbt.fit(train_data)
-best_gbt = cv_model_gbt.bestModel
 
-# Save best model
+# select best model and save it
+best_gbt = cv_model_gbt.bestModel
 best_gbt.write().overwrite().save("project/models/model2")
 
-# Predict on test data
+# predict
 pred_gbt = best_gbt.transform(test_data)
 
-# Evaluate
-rmse_gbt = RegressionEvaluator(labelCol="label", predictionCol="prediction",
-                               metricName="rmse").evaluate(pred_gbt)
-r2_gbt = RegressionEvaluator(labelCol="label", predictionCol="prediction",
-                             metricName="r2").evaluate(pred_gbt)
+# evaluate
+rmse_gbt = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="rmse").evaluate(pred_gbt)
+r2_gbt = RegressionEvaluator(labelCol="label", predictionCol="prediction", metricName="r2").evaluate(pred_gbt)
 
-print(f"GBTRegressor -> RMSE: {rmse_gbt:.4f}, R²: {r2_gbt:.4f}")
+print(f"GBTRegressor - RMSE: {rmse_gbt:.4f}, R²: {r2_gbt:.4f}")
 
-# Save predictions
+# save predictions
 pred_gbt.select("label", "prediction") \
         .coalesce(1) \
         .write.mode("overwrite").format("csv") \
         .option("sep", ",").option("header", "true") \
         .save("project/output/model2_predictions.csv")
 
-# -----------------------------------------------------------------------
-# 10. Compare models and save evaluation summary
-# -----------------------------------------------------------------------
+# -----------------
+# MODELS COMPARISON
+# -----------------
 comparison = spark.createDataFrame(
     [
         ("RandomForestRegressor", rmse_rf, r2_rf),
@@ -244,8 +231,6 @@ comparison = spark.createDataFrame(
     ],
     ["model", "RMSE", "R2"]
 )
-
-comparison.show(truncate=False)
 
 comparison.coalesce(1) \
           .write.mode("overwrite").format("csv") \

@@ -1,6 +1,6 @@
 # Columns chosen for the analysis
 
-1. `nr_passag_pagos`: Number of passengers who occupy seats.
+1. `nr_passag_pagos`: Number of passengers who occupy seats and generate revenue.
 2. `nr_passag_gratis`: Number of passengers who occupy seats marketed to the public, but do not generate revenue.
 3. `ds_servico_tipo_linha`: Description of the service referring to the type of line (Passenger/Cargo).
 4. `kg_carga_paga`: Cargo paid. It is the total amount, expressed in kilograms, of all goods that have been transported on the aircraft, except mail and luggage, and have generated direct or indirect revenue for the airline. 

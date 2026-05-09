@@ -110,8 +110,8 @@ assembler = VectorAssembler(
 scaler = StandardScaler(inputCol="features", outputCol="scaled_features", withStd=True, withMean=True)
 
 # time-based train/test split
-train_monthly = monthly.filter(F.col("year") <= 2021)
-test_monthly = monthly.filter(F.col("year") >= 2022)
+train_monthly = monthly.filter(F.col("year") <= 2022)
+test_monthly = monthly.filter(F.col("year") >= 2023)
 
 # pre-processing pipeline (fit only on training data)
 pipeline = Pipeline(stages=[month_encoder, assembler, scaler])

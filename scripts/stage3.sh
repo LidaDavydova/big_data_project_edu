@@ -4,6 +4,8 @@ set -euo pipefail
 
 export HADOOP_CONF_DIR=/etc/hadoop/conf
 export YARN_CONF_DIR=/etc/hadoop/conf
+export PYSPARK_PYTHON=python3.6
+export PYSPARK_DRIVER_PYTHON=python3.6
 
 source ./venv/bin/activate
 

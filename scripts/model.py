@@ -7,14 +7,20 @@ from pyspark.ml.regression import RandomForestRegressor, GBTRegressor
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark.ml import Transformer
+from pyspark import keyword_only
 from pyspark.ml.param.shared import HasInputCol, HasOutputCol
 
 class CyclicalMonthEncoder(Transformer, HasInputCol, HasOutputCol):
-    def __init__(self, inputCol=None, outputCol=None):
+    @keyword_only
+    def __init__(self, inputCol="month", outputCol="month_enc"):
         super().__init__()
-        self._setDefault(inputCol="month", outputCol="month_enc")
         kwargs = self._input_kwargs
         self.setParams(**kwargs)
+
+    @keyword_only
+    def setParams(self, inputCol="month", outputCol="month_enc"):
+        kwargs = self._input_kwargs
+        return self._set(**kwargs)
 
     def _transform(self, dataset):
         input_col = self.getInputCol()
@@ -37,12 +43,13 @@ spark = SparkSession.builder\
         .master("yarn")\
         .config("hive.metastore.uris", "thrift://hadoop-02.uni.innopolis.ru:9883")\
         .config("spark.sql.warehouse.dir", warehouse)\
-        .config("spark.sql.avro.compression.codec", "snappy")\
+        .config("spark.sql.parquet.compression.codec", "gzip")\
         .enableHiveSupport()\
         .getOrCreate()
 
+
 # read dataset
-flights = spark.read.format("avro").table('team12_projectdb.fact_flights_optimized')
+flights = spark.read.table('team12_projectdb.fact_flights_optimized')
 
 # ------------------
 # DATA PREPROCESSING
@@ -103,16 +110,24 @@ assembler = VectorAssembler(
 scaler = StandardScaler(inputCol="features", outputCol="scaled_features", withStd=True, withMean=True)
 
 # time-based train/test split
-train_monthly = monthly.filter(F.col("year") <= 2022)
-test_monthly = monthly.filter(F.col("year") >= 2023)
+train_monthly = monthly.filter(F.col("year") <= 2021)
+test_monthly = monthly.filter(F.col("year") >= 2022)
 
 # pre-processing pipeline (fit only on training data)
 pipeline = Pipeline(stages=[month_encoder, assembler, scaler])
 preproc_model = pipeline.fit(train_monthly)
 
 # transform train and test separately
-train_data = preproc_model.transform(train_monthly).select("scaled_features", "label")
-test_data = preproc_model.transform(test_monthly).select("scaled_features", "label")
+train_data = preproc_model.transform(train_monthly) \
+    .select("scaled_features", "label") \
+    .cache()
+
+test_data = preproc_model.transform(test_monthly) \
+    .select("scaled_features", "label") \
+    .cache()
+
+train_data.count()
+test_data.count()
 
 # save splits as json on hdfs
 train_data.coalesce(1).write.mode("overwrite").format("json").save("project/data/train")
@@ -226,12 +241,13 @@ pred_gbt.select("label", "prediction") \
 # -----------------
 comparison = spark.createDataFrame(
     [
-        ("RandomForestRegressor", rmse_rf, r2_rf),
-        ("GBTRegressor", rmse_gbt, r2_gbt),
+        ("RandomForestRegressor", float(rmse_rf), float(r2_rf)),
+        ("GBTRegressor", float(rmse_gbt), float(r2_gbt)),
     ],
     ["model", "RMSE", "R2"]
 )
 
+# save comparison
 comparison.coalesce(1) \
           .write.mode("overwrite").format("csv") \
           .option("sep", ",").option("header", "true") \

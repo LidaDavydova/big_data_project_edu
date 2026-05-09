@@ -8,6 +8,7 @@ USE team12_projectdb;
 SET hive.exec.dynamic.partition = true;
 SET hive.exec.dynamic.partition.mode = nonstrict;
 SET hive.enforce.bucketing = true;
+SET parquet.compression = GZIP;
 
 -- EXTERNAL TABLES 
 

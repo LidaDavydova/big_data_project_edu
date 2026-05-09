@@ -9,30 +9,6 @@ from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark import keyword_only
 
-class CyclicalMonthEncoder(Transformer, HasInputCol, HasOutputCol):
-    @keyword_only
-    def __init__(self, inputCol="month", outputCol="month_enc"):
-        super().__init__()
-        kwargs = self._input_kwargs
-        self.setParams(**kwargs)
-
-    @keyword_only
-    def setParams(self, inputCol="month", outputCol="month_enc"):
-        kwargs = self._input_kwargs
-        return self._set(**kwargs)
-
-    def _transform(self, dataset):
-        input_col = self.getInputCol()
-        base_col = self.getOutputCol()
-        sin_col = f"{base_col}_sin"
-        cos_col = f"{base_col}_cos"
-
-        return (
-            dataset
-            .withColumn(sin_col, F.sin(2.0 * math.pi * F.col(input_col) / F.lit(12.0)))
-            .withColumn(cos_col, F.cos(2.0 * math.pi * F.col(input_col) / F.lit(12.0)))
-        )
-
 # start spark session
 team = 'team12'
 warehouse = "project/hive/warehouse"
@@ -119,6 +95,30 @@ full_monthly = full_monthly.orderBy("date")
 # FEATURE ENGINEERING
 # -------------------
 
+class CyclicalMonthEncoder(Transformer, HasInputCol, HasOutputCol):
+    @keyword_only
+    def __init__(self, inputCol="month", outputCol="month_enc"):
+        super().__init__()
+        kwargs = self._input_kwargs
+        self.setParams(**kwargs)
+
+    @keyword_only
+    def setParams(self, inputCol="month", outputCol="month_enc"):
+        kwargs = self._input_kwargs
+        return self._set(**kwargs)
+
+    def _transform(self, dataset):
+        input_col = self.getInputCol()
+        base_col = self.getOutputCol()
+        sin_col = f"{base_col}_sin"
+        cos_col = f"{base_col}_cos"
+
+        return (
+            dataset
+            .withColumn(sin_col, F.sin(2.0 * math.pi * F.col(input_col) / F.lit(12.0)))
+            .withColumn(cos_col, F.cos(2.0 * math.pi * F.col(input_col) / F.lit(12.0)))
+        )
+
 month_encoder = CyclicalMonthEncoder(inputCol="month", outputCol="month_enc")
 
 monthly_encoded = month_encoder.transform(full_monthly)
@@ -151,8 +151,8 @@ FEATURE_COLUMNS = [
     "year",
     "time_index",
     "quarter",
-    "month_sin",
-    "month_cos",
+    "month_enc_sin",
+    "month_enc_cos",
     "lag_1",
     "lag_3",
     "lag_6",

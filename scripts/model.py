@@ -6,7 +6,7 @@ from pyspark.ml.param.shared import HasInputCol, HasOutputCol
 from pyspark.ml.feature import VectorAssembler, StandardScaler
 from pyspark.ml.regression import LinearRegression, GBTRegressor
 from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
+from pyspark.ml.tuning import ParamGridBuilder
 from pyspark import keyword_only
 
 # start spark session
@@ -189,41 +189,94 @@ test_data.coalesce(1).write.mode("overwrite").format("json").save("project/data/
 # MODELING
 # --------
 
-def fit_cv_model(pipeline, param_grid, train_df, folds=3):
-    evaluator = RegressionEvaluator(labelCol="log_label", predictionCol="prediction", metricName="rmse")
-    cv = CrossValidator(
-        estimator=pipeline,
-        estimatorParamMaps=param_grid,
-        evaluator=evaluator,
-        numFolds=folds,
-        parallelism=4,
-        seed=0
-    )
-    cv_model = cv.fit(train_df)
-    return cv_model
+def make_time_folds(df, n_folds=3, initial_train_frac=0.5):
+    """
+    Expanding-window time-series folds.
+    Fold 1: train on first 50%, validate on next block
+    Fold 2: train on first ~66.7%, validate on next block
+    Fold 3: train on first ~83.3%, validate on last block
+    """
+    ordered = df.withColumn("row_num", F.row_number().over(Window.orderBy("date")))
+    total_rows = ordered.count()
 
-def score_on_original_scale(model, df):
-    raw_pred = model.transform(df)
+    folds = []
+    for i in range(n_folds):
+        train_end = int(total_rows * (initial_train_frac + i * (1.0 - initial_train_frac) / n_folds))
+        val_end = int(total_rows * (initial_train_frac + (i + 1) * (1.0 - initial_train_frac) / n_folds))
 
-    scored = (
-        raw_pred
-        .withColumn("prediction", F.expm1(F.col("prediction")))
-        .select("label", "prediction")
+        # make sure the split is valid
+        train_end = max(1, min(train_end, total_rows - 1))
+        val_end = max(train_end + 1, min(val_end, total_rows))
+
+        train_fold = ordered.filter(F.col("row_num") <= train_end).drop("row_num")
+        val_fold = ordered.filter(
+            (F.col("row_num") > train_end) & (F.col("row_num") <= val_end)
+        ).drop("row_num")
+
+        if val_fold.limit(1).count() > 0:
+            folds.append((train_fold, val_fold))
+
+    return folds
+
+
+def evaluate_original_scale(model, df):
+    pred = model.transform(df)
+
+    scored = pred.withColumn(
+        "prediction_level", 
+        F.expm1(F.col("prediction"))
     )
 
     rmse = RegressionEvaluator(
         labelCol="label",
-        predictionCol="prediction",
+        predictionCol="prediction_level",
         metricName="rmse"
     ).evaluate(scored)
 
     r2 = RegressionEvaluator(
         labelCol="label",
-        predictionCol="prediction",
+        predictionCol="prediction_level",
         metricName="r2"
     ).evaluate(scored)
 
-    return scored, rmse, r2
+    return rmse, r2, scored
+
+
+def fit_time_series_grid_search(pipeline, param_grid, train_df, n_folds=3):
+    """
+    Manual expanding-window CV for time series.
+    Selects the best param map by average validation RMSE on original scale.
+    """
+    folds = make_time_folds(train_df, n_folds=n_folds)
+
+    best_params = None
+    best_avg_rmse = float("inf")
+    best_avg_r2 = None
+    all_results = []
+
+    for params in param_grid:
+        fold_rmses = []
+        fold_r2s = []
+
+        for fold_train, fold_val in folds:
+            fitted = pipeline.fit(fold_train, params)
+            rmse, r2, _ = evaluate_original_scale(fitted, fold_val)
+            fold_rmses.append(rmse)
+            fold_r2s.append(r2)
+
+        avg_rmse = sum(fold_rmses) / len(fold_rmses)
+        avg_r2 = sum(fold_r2s) / len(fold_r2s)
+
+        all_results.append((params, avg_rmse, avg_r2))
+
+        if avg_rmse < best_avg_rmse:
+            best_avg_rmse = avg_rmse
+            best_avg_r2 = avg_r2
+            best_params = params
+
+    best_model = pipeline.fit(train_df, best_params)
+
+    return best_model, best_params, all_results, best_avg_rmse, best_avg_r2
 
 # -------
 # MODEL 1
@@ -235,6 +288,7 @@ scaler = StandardScaler(inputCol="raw_features", outputCol="features", withStd=T
 lr = LinearRegression(featuresCol="features", labelCol="log_label")
 
 lr_pipeline = Pipeline(stages=[assembler, scaler, lr])
+
 lr_grid = (
     ParamGridBuilder()
     .addGrid(lr.regParam, [0.01, 0.1, 1.0])
@@ -243,18 +297,19 @@ lr_grid = (
     .build()
 )
 
-#train
-lr_cv = fit_cv_model(lr_pipeline, lr_grid, train_data, folds=3)
+# train, pick best model and save it
+lr_best_model, lr_best_params, lr_results, lr_cv_rmse, lr_cv_r2 = fit_time_series_grid_search(
+    lr_pipeline, lr_grid, train_data, n_folds=3
+)
 
-# select best model and save it
-lr_best_model = lr_cv.bestModel
 lr_best_model.write().overwrite().save("project/models/model1")
 
-# evaluate and predict
-lr_scored, lr_rmse, lr_r2 = score_on_original_scale(lr_best_model, test_data)
+# evaluate
+lr_rmse, lr_r2, lr_scored = evaluate_original_scale(lr_best_model, test_data)
 
 # save predictions
-lr_scored.coalesce(1) \
+lr_scored.select("label", F.col("prediction_level").alias("prediction")) \
+    .coalesce(1) \
     .write.mode("overwrite").format("csv") \
     .option("sep", ",").option("header", "true") \
     .save("project/output/model1_predictions.csv")
@@ -272,22 +327,23 @@ gbt_grid = (
     ParamGridBuilder()
     .addGrid(gbt.maxDepth, [2, 4, 6])
     .addGrid(gbt.maxBins, [16, 32, 64])
-    .addGrid(gbt.stepSize, [0.03, 0.1, 0.2])
+    .addGrid(gbt.minInstancesPerNode, [1, 2, 4])
     .build()
 )
 
-#train
-gbt_cv = fit_cv_model(gbt_pipeline, gbt_grid, train_data, folds=3)
+# train, pick best model and save it
+gbt_best_model, gbt_best_params, gbt_results, gbt_cv_rmse, gbt_cv_r2 = fit_time_series_grid_search(
+    gbt_pipeline, gbt_grid, train_data, n_folds=3
+)
 
-# select best model and save it
-gbt_best_model = gbt_cv.bestModel
 gbt_best_model.write().overwrite().save("project/models/model2")
 
-# evaluate and predict
-gbt_scored, gbt_rmse, gbt_r2 = score_on_original_scale(gbt_best_model, test_data)
+# evaluate
+gbt_rmse, gbt_r2, gbt_scored = evaluate_original_scale(gbt_best_model, test_data)
 
 # save predictions
-gbt_scored.coalesce(1) \
+gbt_scored.select("label", F.col("prediction_level").alias("prediction")) \
+    .coalesce(1) \
     .write.mode("overwrite").format("csv") \
     .option("sep", ",").option("header", "true") \
     .save("project/output/model2_predictions.csv")

@@ -10,7 +10,6 @@ data/
 *.java
 venv
 *.tsv
-*.json
 *.xml
 
 # Columnar / big data formats

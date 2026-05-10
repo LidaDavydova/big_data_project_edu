@@ -28,16 +28,13 @@ flights = spark.read.table('team12_projectdb.fact_flights_optimized')
 # DATA CLEANING
 # --------------------
 
-# filter only regular and passenger flights (not identified category is also passenger flights)
-flights = flights.filter(F.col("ds_grupo_di") == "REGULAR")
-flights = flights.filter(F.col("ds_servico_tipo_linha").isin("PASSAGEIRO", "NÃO IDENTIFICADO"))
-
 # drop nan values from year, month and passangers
 flights = flights.na.drop(subset=["nr_ano_partida_real", "nr_mes_partida_real"])
 flights = flights.na.drop(subset=["nr_passag_pagos", "nr_passag_gratis"])
 
-# filter year to be <= 2025
-flights = flights.filter(F.col("nr_ano_partida_real") <= 2025)
+# filter only regular and passenger flights (not identified category is also passenger flights)
+flights = flights.filter(F.col("ds_grupo_di") == "REGULAR")
+flights = flights.filter(F.col("ds_servico_tipo_linha").isin("PASSAGEIRO", "NÃO IDENTIFICADO"))
 
 # filter number of revenue passengers to be adequate
 flights = flights.filter((F.col("nr_passag_pagos") > 0) & (F.col("nr_passag_pagos") <= 853))
@@ -46,6 +43,10 @@ flights = flights.filter((F.col("nr_passag_pagos") > 0) & (F.col("nr_passag_pago
 flights = flights.withColumn("total_passengers", F.col("nr_passag_pagos") + F.col("nr_passag_gratis"))
 flights = flights.filter(F.col("total_passengers") <= 900)
 
+# filter year to be <= 2025
+flights = flights.filter(F.col("nr_ano_partida_real") <= 2025)
+
+# create column date
 flights = flights.withColumn(
     "date",
     F.to_date(
@@ -72,10 +73,6 @@ monthly = (
         F.countDistinct("id_aerodromo_destino").alias("n_destinations"),
         F.countDistinct("nm_pais_origem").alias("n_origin_countries"),
         F.countDistinct("nm_pais_destino").alias("n_destination_countries"),
-        F.countDistinct("ds_tipo_empresa").alias("n_company_types"),
-        F.countDistinct("ds_servico_tipo_linha").alias("n_service_types"),
-        F.countDistinct("ds_natureza_tipo_linha").alias("n_natureza_types"),
-        F.countDistinct("id_aerodromo_origem", "id_aerodromo_destino").alias("n_routes"),
     )
     .orderBy("date")
 )
@@ -101,11 +98,7 @@ numeric_fill_cols = [
     "n_origins",
     "n_destinations",
     "n_origin_countries",
-    "n_destination_countries",
-    "n_company_types",
-    "n_service_types",
-    "n_natureza_types",
-    "n_routes",
+    "n_destination_countries"
 ]
 
 full_monthly = (
@@ -198,14 +191,10 @@ FEATURE_COLUMNS = [
     "month_enc_cos",
     "cargo_kg",
     "n_flights",
-    "n_routes",
     "n_origins",
     "n_destinations",
     "n_origin_countries",
     "n_destination_countries",
-    "n_company_types",
-    "n_service_types",
-    "n_natureza_types",
     "passengers_lag_1",
     "passengers_lag_12",
     "passengers_roll_mean_3",
@@ -234,8 +223,8 @@ split_point = max(1, int(total_rows * 0.8))
 train_data = monthly_encoded.filter(F.col("row_num") <= split_point).drop("row_num")
 test_data = monthly_encoded.filter(F.col("row_num") > split_point).drop("row_num")
 
-train_data.coalesce(1).write.mode("overwrite").format("json").save("project/data/train")
-test_data.coalesce(1).write.mode("overwrite").format("json").save("project/data/test")
+train_data.coalesce(1).write.mode("overwrite").format("json").save("project/data_train_test/train")
+test_data.coalesce(1).write.mode("overwrite").format("json").save("project/data_train_test/test")
 
 # --------------------
 # TIME-SERIES VALIDATION
@@ -322,6 +311,7 @@ def fit_time_series_grid_search(pipeline, param_grid, train_df, n_folds=3):
 # --------------------
 # MODEL 1: RANDOM FOREST
 # --------------------
+
 rf_assembler = VectorAssembler(inputCols=FEATURE_COLUMNS, outputCol="features", handleInvalid="skip")
 rf = RandomForestRegressor(featuresCol="features", labelCol="log_label", seed=42)
 
@@ -329,7 +319,7 @@ rf_pipeline = Pipeline(stages=[rf_assembler, rf])
 
 rf_grid = (
     ParamGridBuilder()
-    .addGrid(rf.numTrees, [10, 20, 30])
+    .addGrid(rf.numTrees, [50, 100])
     .addGrid(rf.maxDepth, [5, 10, 15])
     .addGrid(rf.minInstancesPerNode, [1, 2, 5])
     .build()
@@ -361,7 +351,7 @@ gbt_grid = (
     ParamGridBuilder()
     .addGrid(gbt.maxDepth, [2, 4, 6])                # model parameter
     .addGrid(gbt.minInstancesPerNode, [1, 2, 4])     # model parameter
-    .addGrid(gbt.maxBins, [16, 32, 64])              # algorithmic parameter
+    .addGrid(gbt.stepSize, [0.03, 0.1])            # algorithmic parameter
     .build()
 )
 
@@ -382,6 +372,7 @@ gbt_scored.select("label", F.col("prediction_level").alias("prediction")) \
 # --------------------
 # COMPARISON
 # --------------------
+
 comparison = spark.createDataFrame(
     [
         ("RandomForestRegressor", float(rf_rmse), float(rf_r2)),

@@ -1,3 +1,5 @@
+"""Benchmark read performance for different Spark input formats."""
+
 import sys
 import time
 from pyspark.sql import SparkSession

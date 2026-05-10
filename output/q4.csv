@@ -1,0 +1,70 @@
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q4: Annual Free-to-Paid Passenger Ratio
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> USE team12_projectdb;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS q4_results;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE q4_results
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS PARQUET
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> AS
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_ano_partida_real,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     100.0 * SUM(COALESCE(nr_passag_gratis, 0)) /
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     NULLIF(SUM(nr_passag_pagos), 0) AS free_to_paid_ratio
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> FROM fact_flights_optimized
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> GROUP BY nr_ano_partida_real;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT * FROM q4_results;
++----------------------+---------------------+
+| nr_ano_partida_real  | free_to_paid_ratio  |
++----------------------+---------------------+
+| 2004                 | 2.482842545322677   |
+| 2009                 | 2.332689257279963   |
+| 2011                 | 2.023693190999781   |
+| 2015                 | 1.746558675941165   |
+| 2018                 | 2.013211779401389   |
+| 2019                 | 2.028727805164942   |
+| 2020                 | 2.222878025326490   |
+| 2021                 | 1.999218805766464   |
+| 2024                 | 1.820672936812801   |
+| NULL                 | 0.468569448304340   |
+| 2000                 | 3.219297082887800   |
+| 2001                 | 4.084631381789947   |
+| 2002                 | 4.693057418342467   |
+| 2003                 | 2.698969154262570   |
+| 2005                 | 2.640106365872054   |
+| 2006                 | 2.162955045933771   |
+| 2007                 | 1.924593023438818   |
+| 2008                 | 2.185000230683930   |
+| 2010                 | 1.999469898003361   |
+| 2012                 | 2.055348114479092   |
+| 2013                 | 2.082163061036062   |
+| 2014                 | 1.848339090349722   |
+| 2016                 | 1.759174962403754   |
+| 2017                 | 1.694057808370889   |
+| 2022                 | 2.101195307024061   |
+| 2023                 | 2.040525263032721   |
+| 2025                 | 1.691684798919895   |
+| 2026                 | 1.608363490148774   |
++----------------------+---------------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

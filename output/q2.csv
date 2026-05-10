@@ -1,0 +1,64 @@
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q2: 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> USE team12_projectdb;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS q2_results;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE q2_results
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS PARQUET
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> AS
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_ano_partida_real,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     SUM(nr_passag_pagos + COALESCE(nr_passag_gratis, 0)) AS total_passengers
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> FROM fact_flights_optimized
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> GROUP BY nr_ano_partida_real;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT * FROM q2_results;
++----------------------+-------------------+
+| nr_ano_partida_real  | total_passengers  |
++----------------------+-------------------+
+| 2004                 | 47819430          |
+| 2009                 | 78278441          |
+| 2011                 | 109406600         |
+| 2015                 | 114076984         |
+| 2018                 | 110399874         |
+| 2019                 | 123149808         |
+| 2020                 | 50562173          |
+| 2021                 | 69146371          |
+| 2024                 | 122280801         |
+| NULL                 | 1785867           |
+| 2000                 | 46068783          |
+| 2001                 | 48507000          |
+| 2002                 | 46346668          |
+| 2003                 | 44131001          |
+| 2005                 | 57038347          |
+| 2006                 | 61921059          |
+| 2007                 | 67352244          |
+| 2008                 | 71073799          |
+| 2010                 | 93721401          |
+| 2012                 | 116503237         |
+| 2013                 | 117547083         |
+| 2014                 | 124759290         |
+| 2016                 | 104522656         |
+| 2017                 | 116273342         |
+| 2022                 | 100717330         |
+| 2023                 | 116091476         |
+| 2025                 | 134010611         |
+| 2026                 | 2527              |
++----------------------+-------------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

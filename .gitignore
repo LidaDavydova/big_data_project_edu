@@ -9,7 +9,6 @@ data/
 
 *.java
 venv
-*.csv
 *.tsv
 *.json
 *.xml

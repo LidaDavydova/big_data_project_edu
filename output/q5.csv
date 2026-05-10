@@ -1,0 +1,122 @@
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q5: Domestic vs International traffic summary
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> USE team12_projectdb;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS q5_results;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE q5_results 
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS PARQUET
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> AS
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_ano_partida_real,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     ds_natureza_tipo_linha,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     SUM(nr_passag_pagos + COALESCE(nr_passag_gratis, 0)) AS total_passengers
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> FROM fact_flights_optimized
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> GROUP BY nr_ano_partida_real, ds_natureza_tipo_linha;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT * FROM q5_results;
++----------------------+-------------------------+-------------------+
+| nr_ano_partida_real  | ds_natureza_tipo_linha  | total_passengers  |
++----------------------+-------------------------+-------------------+
+| NULL                 | DOMÉSTICA               | 1783403           |
+| NULL                 | INTERNACIONAL           | 1479              |
+| 2000                 | DOMÉSTICA               | 33455814          |
+| 2000                 | INTERNACIONAL           | 5947957           |
+| 2001                 | DOMÉSTICA               | 38237991          |
+| 2001                 | INTERNACIONAL           | 5669655           |
+| 2002                 | DOMÉSTICA               | 36928746          |
+| 2002                 | NÃO IDENTIFICADA        | 4271940           |
+| 2003                 | DOMÉSTICA               | 33901985          |
+| 2004                 | DOMÉSTICA               | 36324231          |
+| 2005                 | INTERNACIONAL           | 6541923           |
+| 2005                 | NÃO IDENTIFICADA        | 6742995           |
+| 2006                 | NÃO IDENTIFICADA        | 7879641           |
+| 2007                 | DOMÉSTICA               | 53529440          |
+| 2007                 | INTERNACIONAL           | 4688763           |
+| 2008                 | DOMÉSTICA               | 55856133          |
+| 2009                 | INTERNACIONAL           | 6405927           |
+| 2010                 | INTERNACIONAL           | 5499448           |
+| 2010                 | NÃO IDENTIFICADA        | 10687568          |
+| 2011                 | INTERNACIONAL           | 6592945           |
+| 2012                 | DOMÉSTICA               | 96834886          |
+| 2012                 | INTERNACIONAL           | 5900122           |
+| 2012                 | NÃO IDENTIFICADA        | 13768229          |
+| 2013                 | DOMÉSTICA               | 96973714          |
+| 2013                 | INTERNACIONAL           | 6253969           |
+| 2013                 | NÃO IDENTIFICADA        | 14319400          |
+| 2014                 | DOMÉSTICA               | 102553972         |
+| 2014                 | INTERNACIONAL           | 6611349           |
+| 2014                 | NÃO IDENTIFICADA        | 15593969          |
+| 2015                 | DOMÉSTICA               | 93680158          |
+| 2016                 | INTERNACIONAL           | 6943961           |
+| 2017                 | DOMÉSTICA               | 93659292          |
+| 2017                 | NÃO IDENTIFICADA        | 14179662          |
+| 2018                 | INTERNACIONAL           | 8603052           |
+| 2019                 | DOMÉSTICA               | 98139580          |
+| 2019                 | INTERNACIONAL           | 9436041           |
+| 2019                 | NÃO IDENTIFICADA        | 15574187          |
+| 2020                 | DOMÉSTICA               | 43629963          |
+| 2020                 | NÃO IDENTIFICADA        | 4539902           |
+| 2021                 | INTERNACIONAL           | 936780            |
+| 2021                 | NÃO IDENTIFICADA        | 4026598           |
+| 2022                 | DOMÉSTICA               | 84402948          |
+| 2022                 | INTERNACIONAL           | 4324073           |
+| 2023                 | NÃO IDENTIFICADA        | 15594048          |
+| 2024                 | DOMÉSTICA               | 95753946          |
+| 2024                 | INTERNACIONAL           | 8281483           |
+| 2025                 | INTERNACIONAL           | 9554727           |
+| 2026                 | INTERNACIONAL           | 0                 |
+| NULL                 | NÃO IDENTIFICADA        | 985               |
+| 2000                 | NÃO IDENTIFICADA        | 6665012           |
+| 2001                 | NÃO IDENTIFICADA        | 4599354           |
+| 2002                 | INTERNACIONAL           | 5145982           |
+| 2003                 | INTERNACIONAL           | 5137750           |
+| 2003                 | NÃO IDENTIFICADA        | 5091266           |
+| 2004                 | INTERNACIONAL           | 5703279           |
+| 2004                 | NÃO IDENTIFICADA        | 5791920           |
+| 2005                 | DOMÉSTICA               | 43753429          |
+| 2006                 | DOMÉSTICA               | 49013895          |
+| 2006                 | INTERNACIONAL           | 5027523           |
+| 2007                 | NÃO IDENTIFICADA        | 9134041           |
+| 2008                 | INTERNACIONAL           | 6087674           |
+| 2008                 | NÃO IDENTIFICADA        | 9129992           |
+| 2009                 | DOMÉSTICA               | 63088932          |
+| 2009                 | NÃO IDENTIFICADA        | 8783582           |
+| 2010                 | DOMÉSTICA               | 77534385          |
+| 2011                 | DOMÉSTICA               | 90126297          |
+| 2011                 | NÃO IDENTIFICADA        | 12687358          |
+| 2015                 | INTERNACIONAL           | 6787894           |
+| 2015                 | NÃO IDENTIFICADA        | 13608932          |
+| 2016                 | DOMÉSTICA               | 84685296          |
+| 2016                 | NÃO IDENTIFICADA        | 12893399          |
+| 2017                 | INTERNACIONAL           | 8434388           |
+| 2018                 | DOMÉSTICA               | 87775805          |
+| 2018                 | NÃO IDENTIFICADA        | 14021017          |
+| 2020                 | INTERNACIONAL           | 2392308           |
+| 2021                 | DOMÉSTICA               | 64182993          |
+| 2022                 | NÃO IDENTIFICADA        | 11990309          |
+| 2023                 | DOMÉSTICA               | 93817250          |
+| 2023                 | INTERNACIONAL           | 6680178           |
+| 2024                 | NÃO IDENTIFICADA        | 18245372          |
+| 2025                 | DOMÉSTICA               | 103617290         |
+| 2025                 | NÃO IDENTIFICADA        | 20838594          |
+| 2026                 | DOMÉSTICA               | 52                |
+| 2026                 | NÃO IDENTIFICADA        | 2475              |
++----------------------+-------------------------+-------------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

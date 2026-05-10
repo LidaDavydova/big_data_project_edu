@@ -34,14 +34,14 @@ with psql.connect(conn_string) as conn:
         content = file.read()
         cur.execute(content)
     conn.commit()
-
+                
     # Read the commands from the file and execute them.
-    with open(os.path.join("sql", "import_data.sql"), 'r', encoding="utf-8") as f:
+    with open(os.path.join("sql", "import_data.sql"), "r", encoding="utf-8") as f:
         copy_sql = f.read()
-    
+
     for part_file in csv_parts:
-            with open(part_file, "r", encoding="utf-8") as data:
-                cur.copy_expert(copy_sql, data)
+        with open(part_file, "r", encoding="utf-8") as data:
+            cur.copy_expert(copy_sql, data)
 
     # If the sql statements are CRUD then you need to commit the change
     conn.commit()

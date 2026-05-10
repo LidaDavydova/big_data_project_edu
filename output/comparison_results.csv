@@ -1,0 +1,7 @@
+format,codec,write_time_sec,read_time_sec,size_bytes,size_human
+text,gzip,232,21.46,459912597,438.6
+text,snappy,158,17.62,841503320,802.5
+avro,snappy,406,21.0,919838007,877.2
+avro,deflate,458,19.23,535518939,510.7
+parquet,snappy,322,7.66,430738460,410.8
+parquet,gzip,358,7.61,294851536,281.2

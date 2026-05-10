@@ -1,0 +1,68 @@
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q6 Seasonality of passenger demand
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> USE team12_projectdb;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS q6_results;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE q6_results
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS PARQUET
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> AS
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     nr_ano_partida_real,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     SUM(nr_passag_pagos + COALESCE(nr_passag_gratis, 0)) AS total_passengers,
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .>     SUM(COALESCE(kg_carga_paga, 0)) AS total_cargo
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> FROM fact_flights_optimized
+. . . . . . . . . . . . . . . . . . . . . . .> 
+. . . . . . . . . . . . . . . . . . . . . . .> GROUP BY nr_ano_partida_real;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT * FROM q6_results;
++----------------------+-------------------+----------------+
+| nr_ano_partida_real  | total_passengers  |  total_cargo   |
++----------------------+-------------------+----------------+
+| 2004                 | 47819430          | 1.005557497E9  |
+| 2009                 | 78278441          | 8.56421558E8   |
+| 2011                 | 109406600         | 1.270601611E9  |
+| 2015                 | 114076984         | 1.159864802E9  |
+| 2018                 | 110399874         | 1.369756643E9  |
+| 2019                 | 123149808         | 1.365709464E9  |
+| 2020                 | 50562173          | 1.091319547E9  |
+| 2021                 | 69146371          | 1.494801664E9  |
+| 2024                 | 122280801         | 1.659452364E9  |
+| NULL                 | 1785867           | 9394860.0      |
+| 2000                 | 46068783          | 9.21363247E8   |
+| 2001                 | 48507000          | 9.18811121E8   |
+| 2002                 | 46346668          | 9.32732089E8   |
+| 2003                 | 44131001          | 8.91568878E8   |
+| 2005                 | 57038347          | 9.97353049E8   |
+| 2006                 | 61921059          | 9.9395516E8    |
+| 2007                 | 67352244          | 1.054811104E9  |
+| 2008                 | 71073799          | 9.64493342E8   |
+| 2010                 | 93721401          | 1.146441607E9  |
+| 2012                 | 116503237         | 1.307319354E9  |
+| 2013                 | 117547083         | 1.391241906E9  |
+| 2014                 | 124759290         | 1.349515225E9  |
+| 2016                 | 104522656         | 1.115783776E9  |
+| 2017                 | 116273342         | 1.31607731E9   |
+| 2022                 | 100717330         | 1.555642917E9  |
+| 2023                 | 116091476         | 1.51888734E9   |
+| 2025                 | 134010611         | 1.642172205E9  |
+| 2026                 | 2527              | 300925.0       |
++----------------------+-------------------+----------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

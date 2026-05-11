@@ -2,18 +2,25 @@
 
 set -euo pipefail
 
+unset PYSPARK_PYTHON
+unset PYSPARK_DRIVER_PYTHON
+
 export HADOOP_CONF_DIR=/etc/hadoop/conf
 export YARN_CONF_DIR=/etc/hadoop/conf
-export PYSPARK_PYTHON=python3.6
-export PYSPARK_DRIVER_PYTHON=python3.6
 
-source ./venv/bin/activate
+export PYSPARK_DRIVER_PYTHON=venv/bin/python
+export PYSPARK_PYTHON=./venv/venv/bin/python
 
 spark-submit \
     --master yarn \
     --deploy-mode client \
+    --archives venv.tar.gz#venv \
+    --conf spark.executorEnv.PYSPARK_PYTHON=./venv/venv/bin/python \
+    --conf spark.yarn.appMasterEnv.PYSPARK_PYTHON=./venv/venv/bin/python \
+    --conf spark.dynamicAllocation.enabled=false \
+    --conf spark.executor.instances=2 \
     scripts/model.py
-
+    
 hdfs dfs -get -f project/models/model1 models/model1
 hdfs dfs -get -f project/models/model2 models/model2
 

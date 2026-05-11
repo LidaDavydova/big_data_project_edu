@@ -29,3 +29,4 @@ CREATE INDEX idx_origin
 
 CREATE INDEX idx_dest
     ON fact_flight(id_aerodromo_destino);
+    

@@ -8,11 +8,11 @@
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SET hive.exec.dynamic.partition = true;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SET hive.exec.dynamic.partition.mode = nonstrict;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SET hive.enforce.bucketing = true;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SET parquet.compression = GZIP;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- EXTERNAL TABLES 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS fact_flight;
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE fact_flight (
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE fact_flight (
 . . . . . . . . . . . . . . . . . . . . . . .>     flight_id BIGINT,
 . . . . . . . . . . . . . . . . . . . . . . .> 
 . . . . . . . . . . . . . . . . . . . . . . .>     nr_passag_pagos INT,
@@ -62,7 +62,6 @@
 . . . . . . . . . . . . . . . . . . . . . . .> CLUSTERED BY (ds_natureza_tipo_linha) INTO 8 BUCKETS
 . . . . . . . . . . . . . . . . . . . . . . .> STORED AS PARQUET;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- LOAD DATA INTO PARTITIONED TABLE
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> INSERT INTO TABLE fact_flights_optimized
 . . . . . . . . . . . . . . . . . . . . . . .> PARTITION (nr_ano_partida_real)

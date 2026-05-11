@@ -1,4 +1,4 @@
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q3: Monthly Free-to-Paid Passenger Ratio by Year
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q3: Free-to-Paid Passenger Percentage (Year vs Month)
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

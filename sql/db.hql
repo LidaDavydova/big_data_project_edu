@@ -11,9 +11,8 @@ SET hive.enforce.bucketing = true;
 SET parquet.compression = GZIP;
 
 -- EXTERNAL TABLES 
-
 DROP TABLE IF EXISTS fact_flight;
-CREATE TABLE fact_flight (
+CREATE EXTERNAL TABLE fact_flight (
     flight_id BIGINT,
 
     nr_passag_pagos INT,
@@ -63,7 +62,6 @@ PARTITIONED BY (nr_ano_partida_real INT)
 CLUSTERED BY (ds_natureza_tipo_linha) INTO 8 BUCKETS
 STORED AS PARQUET;
 
--- LOAD DATA INTO PARTITIONED TABLE
 
 INSERT INTO TABLE fact_flights_optimized
 PARTITION (nr_ano_partida_real)

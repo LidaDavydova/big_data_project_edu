@@ -1,4 +1,4 @@
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q5: Domestic vs International traffic summary
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- Q5: Annual Passenger Traffic by Route Type
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

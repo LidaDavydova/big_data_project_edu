@@ -1,0 +1,86 @@
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> USE team12_projectdb;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- MODEL OUTPUTS (CSV)
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- MODEL 1 PREDICTIONS (XGBOOST)
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model1_predictions;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE model1_predictions (
+. . . . . . . . . . . . . . . . . . . . . . .>     label DOUBLE,
+. . . . . . . . . . . . . . . . . . . . . . .>     prediction DOUBLE
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+. . . . . . . . . . . . . . . . . . . . . . .> WITH SERDEPROPERTIES (
+. . . . . . . . . . . . . . . . . . . . . . .>     "separatorChar" = ",",
+. . . . . . . . . . . . . . . . . . . . . . .>     "quoteChar" = "\""
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS TEXTFILE
+. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/output/model1_predictions'
+. . . . . . . . . . . . . . . . . . . . . . .> TBLPROPERTIES ("skip.header.line.count"="1");
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- MODEL 2 PREDICTIONS (GBT)
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model2_predictions;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE model2_predictions (
+. . . . . . . . . . . . . . . . . . . . . . .>     label DOUBLE,
+. . . . . . . . . . . . . . . . . . . . . . .>     prediction DOUBLE
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+. . . . . . . . . . . . . . . . . . . . . . .> WITH SERDEPROPERTIES (
+. . . . . . . . . . . . . . . . . . . . . . .>     "separatorChar" = ",",
+. . . . . . . . . . . . . . . . . . . . . . .>     "quoteChar" = "\""
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS TEXTFILE
+. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/output/model2_predictions'
+. . . . . . . . . . . . . . . . . . . . . . .> TBLPROPERTIES ("skip.header.line.count"="1");
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- MODEL EVALUATION
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model_evaluation;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE model_evaluation (
+. . . . . . . . . . . . . . . . . . . . . . .>     model STRING,
+. . . . . . . . . . . . . . . . . . . . . . .>     rmse DOUBLE,
+. . . . . . . . . . . . . . . . . . . . . . .>     r2 DOUBLE
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+. . . . . . . . . . . . . . . . . . . . . . .> WITH SERDEPROPERTIES (
+. . . . . . . . . . . . . . . . . . . . . . .>     "separatorChar" = ",",
+. . . . . . . . . . . . . . . . . . . . . . .>     "quoteChar" = "\""
+. . . . . . . . . . . . . . . . . . . . . . .> )
+. . . . . . . . . . . . . . . . . . . . . . .> STORED AS TEXTFILE
+. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/output/evaluation.csv'
+. . . . . . . . . . . . . . . . . . . . . . .> TBLPROPERTIES ("skip.header.line.count"="1");
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- VALIDATION
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT COUNT(*) AS total_rows
+. . . . . . . . . . . . . . . . . . . . . . .> FROM model1_predictions;
++-------------+
+| total_rows  |
++-------------+
+| 72          |
++-------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT COUNT(*) AS total_rows
+. . . . . . . . . . . . . . . . . . . . . . .> FROM model2_predictions;
++-------------+
+| total_rows  |
++-------------+
+| 72          |
++-------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT *
+. . . . . . . . . . . . . . . . . . . . . . .> FROM model_evaluation;
++-------------------------+------------------------+----------------------+
+| model_evaluation.model  | model_evaluation.rmse  | model_evaluation.r2  |
++-------------------------+------------------------+----------------------+
+| SparkXGBRegressor       | 6257714.862774928      | -3.534175556723503   |
+| GBTRegressor            | 5315851.869415744      | -2.271994248923258   |
++-------------------------+------------------------+----------------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

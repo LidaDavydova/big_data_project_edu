@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+tar -czf venv.tar.gz venv
+
 unset PYSPARK_PYTHON
 unset PYSPARK_DRIVER_PYTHON
 

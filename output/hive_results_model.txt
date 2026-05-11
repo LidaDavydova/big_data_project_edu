@@ -4,6 +4,7 @@
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- MODEL 1 PREDICTIONS (XGBOOST)
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model1_predictions;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE model1_predictions (
@@ -16,11 +17,12 @@
 . . . . . . . . . . . . . . . . . . . . . . .>     "quoteChar" = "\""
 . . . . . . . . . . . . . . . . . . . . . . .> )
 . . . . . . . . . . . . . . . . . . . . . . .> STORED AS TEXTFILE
-. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/output/model1_predictions'
+. . . . . . . . . . . . . . . . . . . . . . .> LOCATION '/user/team12/project/output/model1_predictions'
 . . . . . . . . . . . . . . . . . . . . . . .> TBLPROPERTIES ("skip.header.line.count"="1");
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- MODEL 2 PREDICTIONS (GBT)
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model2_predictions;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
@@ -34,53 +36,63 @@
 . . . . . . . . . . . . . . . . . . . . . . .>     "quoteChar" = "\""
 . . . . . . . . . . . . . . . . . . . . . . .> )
 . . . . . . . . . . . . . . . . . . . . . . .> STORED AS TEXTFILE
-. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/output/model2_predictions'
+. . . . . . . . . . . . . . . . . . . . . . .> LOCATION '/user/team12/project/output/model2_predictions'
 . . . . . . . . . . . . . . . . . . . . . . .> TBLPROPERTIES ("skip.header.line.count"="1");
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model1_predictions_indexed;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- MODEL EVALUATION
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE model1_predictions_indexed AS
+. . . . . . . . . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .>     row_number() OVER (ORDER BY label) AS idx,
+. . . . . . . . . . . . . . . . . . . . . . .>     label,
+. . . . . . . . . . . . . . . . . . . . . . .>     prediction
+. . . . . . . . . . . . . . . . . . . . . . .> FROM model1_predictions;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model_evaluation;
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE EXTERNAL TABLE model_evaluation (
-. . . . . . . . . . . . . . . . . . . . . . .>     model STRING,
-. . . . . . . . . . . . . . . . . . . . . . .>     rmse DOUBLE,
-. . . . . . . . . . . . . . . . . . . . . . .>     r2 DOUBLE
-. . . . . . . . . . . . . . . . . . . . . . .> )
-. . . . . . . . . . . . . . . . . . . . . . .> ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
-. . . . . . . . . . . . . . . . . . . . . . .> WITH SERDEPROPERTIES (
-. . . . . . . . . . . . . . . . . . . . . . .>     "separatorChar" = ",",
-. . . . . . . . . . . . . . . . . . . . . . .>     "quoteChar" = "\""
-. . . . . . . . . . . . . . . . . . . . . . .> )
-. . . . . . . . . . . . . . . . . . . . . . .> STORED AS TEXTFILE
-. . . . . . . . . . . . . . . . . . . . . . .> LOCATION 'project/output/evaluation.csv'
-. . . . . . . . . . . . . . . . . . . . . . .> TBLPROPERTIES ("skip.header.line.count"="1");
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> DROP TABLE IF EXISTS model2_predictions_indexed;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> CREATE TABLE model2_predictions_indexed AS
+. . . . . . . . . . . . . . . . . . . . . . .> SELECT
+. . . . . . . . . . . . . . . . . . . . . . .>     row_number() OVER (ORDER BY label) AS idx,
+. . . . . . . . . . . . . . . . . . . . . . .>     label,
+. . . . . . . . . . . . . . . . . . . . . . .>     prediction
+. . . . . . . . . . . . . . . . . . . . . . .> FROM model2_predictions;
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> -- VALIDATION
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT COUNT(*) AS total_rows
-. . . . . . . . . . . . . . . . . . . . . . .> FROM model1_predictions;
-+-------------+
-| total_rows  |
-+-------------+
-| 72          |
-+-------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT 'MODEL1 COUNT' AS info, COUNT(*) FROM model1_predictions;
++---------------+------+
+|     info      | _c1  |
++---------------+------+
+| MODEL1 COUNT  | 60   |
++---------------+------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT 'MODEL2 COUNT' AS info, COUNT(*) FROM model2_predictions;
++---------------+------+
+|     info      | _c1  |
++---------------+------+
+| MODEL2 COUNT  | 60   |
++---------------+------+
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT COUNT(*) AS total_rows
-. . . . . . . . . . . . . . . . . . . . . . .> FROM model2_predictions;
-+-------------+
-| total_rows  |
-+-------------+
-| 72          |
-+-------------+
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT *
-. . . . . . . . . . . . . . . . . . . . . . .> FROM model_evaluation;
-+-------------------------+------------------------+----------------------+
-| model_evaluation.model  | model_evaluation.rmse  | model_evaluation.r2  |
-+-------------------------+------------------------+----------------------+
-| SparkXGBRegressor       | 6257714.862774928      | -3.534175556723503   |
-| GBTRegressor            | 5315851.869415744      | -2.271994248923258   |
-+-------------------------+------------------------+----------------------+
-0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT * FROM model1_predictions_indexed LIMIT 5;
++---------------------------------+-----------------------------------+----------------------------------------+
+| model1_predictions_indexed.idx  | model1_predictions_indexed.label  | model1_predictions_indexed.prediction  |
++---------------------------------+-----------------------------------+----------------------------------------+
+| 1                               | 1.0014937E7                       | 9846203.966737172                      |
+| 2                               | 1.012706E7                        | 8429428.98903051                       |
+| 3                               | 1.0161005E7                       | 1.0038523169831157E7                   |
+| 4                               | 1.0189594E7                       | 1.3158790241688427E7                   |
+| 5                               | 1.0198837E7                       | 1.0206954230605416E7                   |
++---------------------------------+-----------------------------------+----------------------------------------+
+0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> SELECT * FROM model2_predictions_indexed LIMIT 5;
++---------------------------------+-----------------------------------+----------------------------------------+
+| model2_predictions_indexed.idx  | model2_predictions_indexed.label  | model2_predictions_indexed.prediction  |
++---------------------------------+-----------------------------------+----------------------------------------+
+| 1                               | 1.0014937E7                       | 9296387.58024636                       |
+| 2                               | 1.012706E7                        | 9478381.780958222                      |
+| 3                               | 1.0161005E7                       | 9296387.58024636                       |
+| 4                               | 1.0189594E7                       | 8709185.123036897                      |
+| 5                               | 1.0198837E7                       | 9423311.183927098                      |
++---------------------------------+-----------------------------------+----------------------------------------+
 0: jdbc:hive2://hadoop-03.uni.innopolis.ru:10> 

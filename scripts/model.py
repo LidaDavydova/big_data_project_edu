@@ -1,5 +1,3 @@
-"""Time-series passenger forecasting using Spark ML and XGBoost."""
-
 import math
 
 from pyspark import keyword_only

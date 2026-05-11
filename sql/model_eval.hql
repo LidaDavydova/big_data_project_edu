@@ -4,6 +4,7 @@ USE team12_projectdb;
 
 -- MODEL 1 PREDICTIONS (XGBOOST)
 
+
 DROP TABLE IF EXISTS model1_predictions;
 
 CREATE EXTERNAL TABLE model1_predictions (
@@ -16,11 +17,12 @@ WITH SERDEPROPERTIES (
     "quoteChar" = "\""
 )
 STORED AS TEXTFILE
-LOCATION 'project/output/model1_predictions'
+LOCATION '/user/team12/project/output/model1_predictions'
 TBLPROPERTIES ("skip.header.line.count"="1");
 
 
 -- MODEL 2 PREDICTIONS (GBT)
+
 
 DROP TABLE IF EXISTS model2_predictions;
 
@@ -34,35 +36,34 @@ WITH SERDEPROPERTIES (
     "quoteChar" = "\""
 )
 STORED AS TEXTFILE
-LOCATION 'project/output/model2_predictions'
+LOCATION '/user/team12/project/output/model2_predictions'
 TBLPROPERTIES ("skip.header.line.count"="1");
 
+DROP TABLE IF EXISTS model1_predictions_indexed;
 
--- MODEL EVALUATION
+CREATE TABLE model1_predictions_indexed AS
+SELECT
+    row_number() OVER (ORDER BY label) AS idx,
+    label,
+    prediction
+FROM model1_predictions;
 
-DROP TABLE IF EXISTS model_evaluation;
 
-CREATE EXTERNAL TABLE model_evaluation (
-    model STRING,
-    rmse DOUBLE,
-    r2 DOUBLE
-)
-ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
-WITH SERDEPROPERTIES (
-    "separatorChar" = ",",
-    "quoteChar" = "\""
-)
-STORED AS TEXTFILE
-LOCATION 'project/output/evaluation.csv'
-TBLPROPERTIES ("skip.header.line.count"="1");
+DROP TABLE IF EXISTS model2_predictions_indexed;
+
+CREATE TABLE model2_predictions_indexed AS
+SELECT
+    row_number() OVER (ORDER BY label) AS idx,
+    label,
+    prediction
+FROM model2_predictions;
+
+
 
 -- VALIDATION
 
-SELECT COUNT(*) AS total_rows
-FROM model1_predictions;
+SELECT 'MODEL1 COUNT' AS info, COUNT(*) FROM model1_predictions;
+SELECT 'MODEL2 COUNT' AS info, COUNT(*) FROM model2_predictions;
 
-SELECT COUNT(*) AS total_rows
-FROM model2_predictions;
-
-SELECT *
-FROM model_evaluation;
+SELECT * FROM model1_predictions_indexed LIMIT 5;
+SELECT * FROM model2_predictions_indexed LIMIT 5;

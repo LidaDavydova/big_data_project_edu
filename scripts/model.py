@@ -1,5 +1,4 @@
 import math
-
 from pyspark import keyword_only
 from pyspark.ml import Pipeline, Transformer
 from pyspark.ml.evaluation import RegressionEvaluator
@@ -9,8 +8,7 @@ from pyspark.ml.regression import GBTRegressor
 from pyspark.ml.tuning import ParamGridBuilder
 from pyspark.sql import SparkSession, Window
 from pyspark.sql import functions as F
-
-from xgboost.spark import SparkXGBRegressor  # pylint: disable=import-error
+from xgboost.spark import SparkXGBRegressor
 
 # start spark session
 team = 'team12'
@@ -109,7 +107,7 @@ full_monthly = full_monthly.withColumn(
     ((F.col("year") - F.lit(min_year)) * F.lit(12) + F.col("month")).cast("int")
 )
 
-# create log-transformed target (use for both training and feature lags)
+# create log-transformed target
 full_monthly = full_monthly.withColumn("log_label", F.log1p(F.col("label")))
 
 # --------------------
@@ -158,7 +156,7 @@ full_monthly = (
     .withColumn("passengers_roll_std_12", F.stddev("log_label").over(w12))
 )
 
-# apply encoder AFTER lag features
+# apply encoder
 monthly_encoded = month_encoder.transform(full_monthly)
 
 FEATURE_COLUMNS = [
@@ -177,7 +175,7 @@ FEATURE_COLUMNS = [
     "passengers_roll_std_12",
 ]
 
-# Drop rows with nulls (first 24 months will be removed)
+# Drop rows with nulls
 monthly_encoded = monthly_encoded.na.drop(subset=FEATURE_COLUMNS + ["log_label", "label"]).orderBy("date")
 
 # --------------------
@@ -191,7 +189,6 @@ split_point = max(1, int(total_rows * 0.75))
 train_data = monthly_encoded.filter(F.col("row_num") <= split_point).drop("row_num")
 test_data = monthly_encoded.filter(F.col("row_num") > split_point).drop("row_num")
 
-# Save train/test as Parquet (removed coalesce(1) for better parallelism)
 train_data.write.mode("overwrite").format("parquet").save("project/data_train_test/train")
 test_data.write.mode("overwrite").format("parquet").save("project/data_train_test/test")
 
@@ -223,7 +220,6 @@ def make_time_folds(df, n_folds=3, initial_train_frac=0.5):
 
 def evaluate_original_scale(model, df):
     pred = model.transform(df)
-    # model predicts on log scale, convert back
     scored = pred.withColumn(
         "prediction_level",
         F.greatest(F.lit(0.0), F.expm1(F.col("prediction")))
@@ -248,7 +244,6 @@ def fit_time_series_grid_search(pipeline, param_grid, train_df, n_folds=3):
     if not folds:
         raise ValueError("Not enough data to create time-series folds.")
 
-    # Extract assembler (first stage) and estimator (last stage)
     assembler = pipeline.getStages()[0]
     estimator = pipeline.getStages()[-1]
 
@@ -262,9 +257,7 @@ def fit_time_series_grid_search(pipeline, param_grid, train_df, n_folds=3):
         fold_r2s = []
 
         for fold_train, fold_val in folds:
-            # Clone estimator and set parameters
             estimator_copy = estimator.copy(params)
-            # Build new pipeline with same assembler and cloned estimator
             pipeline_copy = Pipeline(stages=[assembler, estimator_copy])
             fitted = pipeline_copy.fit(fold_train)
             rmse, r2, _ = evaluate_original_scale(fitted, fold_val)
@@ -280,7 +273,6 @@ def fit_time_series_grid_search(pipeline, param_grid, train_df, n_folds=3):
             best_avg_r2 = avg_r2
             best_params = params
 
-    # Refit on full training data with best params
     estimator_best = estimator.copy(best_params)
     pipeline_best = Pipeline(stages=[assembler, estimator_best])
     best_model = pipeline_best.fit(train_df)

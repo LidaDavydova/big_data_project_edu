@@ -1,14 +1,18 @@
+"""Time-series passenger forecasting using Spark ML and XGBoost."""
+
 import math
+
+from pyspark import keyword_only
+from pyspark.ml import Pipeline, Transformer
+from pyspark.ml.evaluation import RegressionEvaluator
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.param.shared import HasInputCol, HasOutputCol
+from pyspark.ml.regression import GBTRegressor
+from pyspark.ml.tuning import ParamGridBuilder
 from pyspark.sql import SparkSession, Window
 from pyspark.sql import functions as F
-from pyspark.ml import Transformer, Pipeline
-from pyspark.ml.param.shared import HasInputCol, HasOutputCol
-from pyspark.ml.feature import VectorAssembler
-from pyspark.ml.regression import GBTRegressor
-from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.ml.tuning import ParamGridBuilder
-from xgboost.spark import SparkXGBRegressor
-from pyspark import keyword_only
+
+from xgboost.spark import SparkXGBRegressor  # pylint: disable=import-error
 
 # start spark session
 team = 'team12'
